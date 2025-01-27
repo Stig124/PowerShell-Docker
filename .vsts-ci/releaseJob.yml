@@ -72,31 +72,8 @@ jobs:
     displayName: Get Proper ImageName and ContextFolder
     name: setImageNameStep
   - pwsh: |
-      $modules = 'Az.Accounts', 'Az.Storage'
-      foreach ($module in $modules) {
-        if (!(Get-Module $module -listavailable)) {
-          Write-Host "installing $module..." -verbose
-          Install-Module $module -force -allowclobber
-        } else {
-          Write-Host "$module is already installed" -verbose
-        }
-      }
-    displayName: 'Install AzAccounts'
-  - task: AzurePowerShell@5
-    inputs:
-      azureSubscription: az-blob-cicd-infra
-      scriptType: inlineScript
-      azurePowerShellVersion: latestVersion
-      pwsh: true
-      inline: |
-        $containerName = Out-String -InputObject $(DOCKERNAMESPACE) -NoNewline
-        $containerName = $containerName.Replace('.', '-')
-        $context = New-AzStorageContext -StorageAccountName $(StorageAccount)
-        $querystring = New-AzStorageContainerSASToken -Context $context -Name $containerName -Permission r -ExpiryTime ((get-date).AddMinutes(180)) -Protocol HttpsOnly
-        $uriBuilder = [System.UriBuilder]::new("https://$(StorageAccount).blob.core.windows.net")
-        $uriBuilder.Query = $querystring.ToString()
-        $url = $uriBuilder.ToString()
-        Write-Host "##vso[task.setvariable variable=SasUrl;]$url"
+      $afdUri = "https://powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net/install/?fakesas=yes"
+      Write-Host "##vso[task.setvariable variable=SasUrl;]$afdUri"
     displayName: 'Set SasUrl variable'
   - pwsh: |
       Get-ChildItem env: | Out-String -Width 1000
@@ -149,12 +126,6 @@ jobs:
       targetPath: $(Build.SourcesDirectory)/dst/$(dockerBuildImageName)
       artifact: drop_StageGenerateBuild_${{ parameters.channel }}_Job_PreBuild_${{ parameters.archName }}_${{ parameters.artifactSuffix }}
     displayName: 'Download artifact to which Dockerfile was uploaded'
-  - task: onebranch.pipeline.containercontrol@1
-    displayName: "Login to source ACR"
-    inputs:
-      command: login
-      acr_name: $(ACRName)
-      tenant: MSFT
   - task: onebranch.pipeline.imagebuildinfo@1
     displayName: image build
     inputs:

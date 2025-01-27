@@ -21,7 +21,7 @@ variables:
 - name: DisableDockerDetector
   value: true
 - name: LinuxContainerImage
-  value: mcr.microsoft.com/onebranch/cbl-mariner/build:2.0
+  value: onebranch.azurecr.io/linux/ubuntu-2004:latest
 - name: WindowsContainerImage
   value: onebranch.azurecr.io/windows/ltsc2019/vse2022:latest
 - name: ob_sdl_sbom_enabled
@@ -42,6 +42,10 @@ extends:
   parameters:
     featureFlags:
       runHostSDL: true
+      # Work around regression in OneBranch docker builds
+      needExceptionForUbuntuUsage: true
+      LinuxHostVersion:
+        Distribution: Ubuntu
     customTags: 'ES365AIMigrationTooling-BulkMigrated'
     stages:
     - stage: StageResolveVersionandYaml
@@ -136,14 +140,14 @@ extends:
       - template: /.vsts-ci/stableReleaseStage.yml@self
         parameters:
           channel: ${{ parameters.releaseChannel }}
-          channelPath: 'release/7-4'
+          channelPath: 'release/7-5'
     - ${{ if eq(parameters.releaseChannel, 'preview') }}:
       - template: /.vsts-ci/previewReleaseStage.yml@self
         parameters:
           channel: ${{ parameters.releaseChannel }}
-          channelPath: 'release/7-5'
+          channelPath: 'release/7-6'
     - ${{ if eq(parameters.releaseChannel, 'lts') }}:
       - template: /.vsts-ci/ltsReleaseStage.yml@self
         parameters:
           channel: ${{ parameters.releaseChannel }}
-          channelPath: 'release/7-2'
+          channelPath: 'release/7-4'
